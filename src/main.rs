@@ -294,7 +294,6 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     println!("   • Critical Tasks: {}", critical_path.join(" → "));
     println!("   • Critical Path Duration: {:.1} days", schedule.early_finish.values().fold(0.0f64, |acc, &x| acc.max(x)));
     println!();
-
     println!("💡 RECOMMENDATIONS:");
     println!("   • Tell client with 80% confidence: {} weeks ({:.0} days)", (p80 / 7.0).ceil(), p80.ceil());
     println!("   • Add {} weeks ({:.0} days) buffer for internal planning", ((p95 - p80) / 7.0).ceil(), (p95 - p80).ceil());

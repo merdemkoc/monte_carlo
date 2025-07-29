@@ -19,6 +19,14 @@ This tool performs Monte Carlo simulations on project schedules to provide proba
 - 📈 **McKinsey Methodology**: Incorporates research-backed planning factors
 - 🔍 **Detailed Reporting**: Comprehensive analysis with actionable recommendations
 
+## Methodology
+
+This tool combines three sophisticated methodologies to provide accurate project duration estimates:
+
+- **[PERT Methodology](PERT-methodology.md)**: Statistical foundation using three-point estimation and Beta distribution modeling
+- **[McKinsey Factors](mckinsey-factors.md)**: Research-backed adjustments for hidden tasks (10-15%) and system risk (1.0-1.35x)
+- **[Monte Carlo Simulation](monte-carlo-simulation.md)**: Probabilistic modeling through thousands of iterations to generate confidence intervals
+
 ## Installation
 
 ### Prerequisites
