@@ -1,5 +1,3 @@
-mod second;
-
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fs::File;
@@ -7,7 +5,7 @@ use std::io::BufReader;
 use csv::Reader;
 use serde::{Deserialize};
 use rand::prelude::*;
-use rand::thread_rng;
+use rand::rng;
 use rand_distr::{Distribution, Normal};
 
 #[derive(Debug, Deserialize, Clone)]
@@ -163,35 +161,36 @@ impl ProjectSchedule {
 }
 
 fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), Box<dyn Error>> {
-    println!("🚀 Monte Carlo Proje Planlama Simülasyonu Başlatılıyor...");
+    println!("🚀 Starting Monte Carlo Project Planning Simulation...");
     println!();
-    println!("📘 HESAPLAMA METODOLOJİSİ:");
-    println!("Bu simülasyon her iterasyonda şu adımları takip eder: (1) Her görev için Optimistic-Most Likely-Pessimistic");
-    println!("tahminlerinizden PERT dağılımı hesaplanır, (2) Her görev için bu dağılımdan rastgele bir süre üretilir,");
-    println!("(3) Bağımlılık sırasına göre kritik yol hesaplanarak temel proje süresi bulunur, (4) McKinsey bulgularına");
-    println!("göre proje süresinin %10-15'i arası görünmeyen görevler eklenir, (5) Son olarak sistemik riskleri modellemek");
-    println!("için sonuç 1.0x-1.35x arası rastgele çarpanla çarpılır. Bu işlem {} kez tekrarlanarak gerçekçi", iterations);
-    println!("bir olasılık dağılımı elde edilir ve size %50, %80, %95 güven seviyelerindeki tahmimler sunulur.");
+    println!("📘 CALCULATION METHODOLOGY:");
+    println!("This simulation follows these steps in each iteration: (1) PERT distribution is calculated from your");
+    println!("Optimistic-Most Likely-Pessimistic estimates for each task, (2) A random duration is generated from");
+    println!("this distribution for each task, (3) Critical path is calculated based on dependencies to find base");
+    println!("project duration, (4) Hidden tasks are added (10-15% of project time) based on McKinsey findings,");
+    println!("(5) Finally, result is multiplied by a random factor (1.0x-1.35x) to model systemic risks. This");
+    println!("process is repeated {} times to obtain a realistic probability distribution and provide estimates", iterations);
+    println!("at 50%, 80%, and 95% confidence levels.");
     println!();
-    println!("📊 Simülasyon Parametreleri:");
-    println!("   • Dosya: {}", filename);
-    println!("   • İterasyon Sayısı: {}", iterations);
-    println!("   • Hedef Güven Seviyeleri: %50, %80, %95");
-    println!("   • McKinsey Ayarları: Görünmeyen görevler %10-15, Sistem riski 1.0-1.35x");
+    println!("📊 Simulation Parameters:");
+    println!("   • File: {}", filename);
+    println!("   • Number of Iterations: {}", iterations);
+    println!("   • Target Confidence Levels: 50%, 80%, 95%");
+    println!("   • McKinsey Settings: Hidden tasks 10-15%, System risk 1.0-1.35x");
     println!();
 
     let mut schedule = ProjectSchedule::load_from_csv(filename)?;
-    let mut rng = thread_rng();
+    let mut rng = rng();
     let mut durations = Vec::new();
 
-    println!("📋 Yüklenen Görevler:");
+    println!("📋 Loaded Tasks:");
     for (task_id, task) in &schedule.tasks {
-        println!("   • {} - {} (PERT: {:.1} ± {:.1} gün)",
+        println!("   • {} - {} (PERT: {:.1} ± {:.1} days)",
                  task_id, task.name, task.pert_expected, task.pert_stddev);
     }
     println!();
 
-    println!("⚡ Simülasyon çalışıyor...");
+    println!("⚡ Running simulation...");
     let start_time = std::time::Instant::now();
 
     let mut total_base_duration = 0.0;
@@ -200,7 +199,7 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
 
     for iteration in 0..iterations {
         if iteration % 1000 == 0 {
-            print!("   İlerleme: {:.1}%\r", (iteration as f64 / iterations as f64) * 100.0);
+            print!("   Progress: {:.1}%\r", (iteration as f64 / iterations as f64) * 100.0);
             std::io::Write::flush(&mut std::io::stdout()).unwrap();
         }
 
@@ -210,11 +209,11 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
         // McKinsey bulgularını uygula
 
         // 1. Görünmeyen görevler için ek süre (proje toplam süresinin %10-15'i)
-        let invisible_tasks_factor = rng.gen_range(0.10..=0.15);
+        let invisible_tasks_factor = rng.random_range(0.10..=0.15);
         let invisible_tasks_duration = base_project_duration * invisible_tasks_factor;
 
         // 2. Sistem düzeyinde risk faktörü (1.0 - 1.35 arası)
-        let system_risk_factor = rng.gen_range(1.0..=1.35);
+        let system_risk_factor = rng.random_range(1.0..=1.35);
 
         // Final proje süresi hesaplama
         let final_project_duration = (base_project_duration + invisible_tasks_duration) * system_risk_factor;
@@ -228,7 +227,7 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     }
 
     let elapsed = start_time.elapsed();
-    println!("   ✅ {} iterasyon tamamlandı ({:.2} saniye)", iterations, elapsed.as_secs_f64());
+    println!("   ✅ {} iterations completed ({:.2} seconds)", iterations, elapsed.as_secs_f64());
     println!();
 
     // McKinsey faktörlerinin ortalamalarını hesapla
@@ -236,11 +235,11 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     let avg_invisible_tasks = total_invisible_tasks / iterations as f64;
     let avg_system_risk_factor = total_system_risk_factor / iterations as f64;
 
-    println!("🔍 McKINSEY FAKTÖR ANALİZİ:");
-    println!("   • Ortalama Temel Proje Süresi:     {:.1} gün ({:.1} hafta)", avg_base_duration, avg_base_duration / 7.0);
-    println!("   • Ortalama Görünmeyen Görevler:    +{:.1} gün ({:.1}% ekleme)", avg_invisible_tasks, (avg_invisible_tasks / avg_base_duration) * 100.0);
-    println!("   • Ortalama Sistem Risk Çarpanı:    x{:.2} ({:.1}% artış)", avg_system_risk_factor, (avg_system_risk_factor - 1.0) * 100.0);
-    println!("   • Toplam McKinsey Etkisi:          {:.1} gün → {:.1} gün ({:.1}% artış)",
+    println!("🔍 MCKINSEY FACTOR ANALYSIS:");
+    println!("   • Average Base Project Duration:   {:.1} days ({:.1} weeks)", avg_base_duration, avg_base_duration / 7.0);
+    println!("   • Average Hidden Tasks:            +{:.1} days ({:.1}% addition)", avg_invisible_tasks, (avg_invisible_tasks / avg_base_duration) * 100.0);
+    println!("   • Average System Risk Multiplier:  x{:.2} ({:.1}% increase)", avg_system_risk_factor, (avg_system_risk_factor - 1.0) * 100.0);
+    println!("   • Total McKinsey Effect:           {:.1} days → {:.1} days ({:.1}% increase)",
              avg_base_duration,
              avg_base_duration * avg_system_risk_factor + avg_invisible_tasks,
              ((avg_base_duration * avg_system_risk_factor + avg_invisible_tasks) / avg_base_duration - 1.0) * 100.0);
@@ -266,54 +265,54 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     let (critical_path, _) = schedule.find_critical_path();
 
     // Sonuçları yazdır
-    println!("📈 MONTE CARLO SİMÜLASYON SONUÇLARI");
+    println!("📈 MONTE CARLO SIMULATION RESULTS");
     println!("═══════════════════════════════════════");
     println!();
-    println!("🎯 Temel İstatistikler:");
-    println!("   • Ortalama Süre:     {:.1} gün ({:.1} hafta)", mean, mean / 7.0);
-    println!("   • Medyan Süre:       {:.1} gün ({:.1} hafta)", median, median / 7.0);
-    println!("   • Minimum Süre:      {:.1} gün ({:.1} hafta)", min, min / 7.0);
-    println!("   • Maksimum Süre:     {:.1} gün ({:.1} hafta)", max, max / 7.0);
+    println!("🎯 Basic Statistics:");
+    println!("   • Average Duration:  {:.1} days ({:.1} weeks)", mean, mean / 7.0);
+    println!("   • Median Duration:   {:.1} days ({:.1} weeks)", median, median / 7.0);
+    println!("   • Minimum Duration:  {:.1} days ({:.1} weeks)", min, min / 7.0);
+    println!("   • Maximum Duration:  {:.1} days ({:.1} weeks)", max, max / 7.0);
     println!();
 
-    println!("🎲 Olasılık Dağılımı:");
-    println!("   • %50 İhtimalle:     {:.1} gün ({:.1} hafta) içinde biter", median, median / 7.0);
-    println!("   • %80 İhtimalle:     {:.1} gün ({:.1} hafta) içinde biter", p80, p80 / 7.0);
-    println!("   • %95 İhtimalle:     {:.1} gün ({:.1} hafta) içinde biter", p95, p95 / 7.0);
+    println!("🎲 Probability Distribution:");
+    println!("   • 50% Probability:   Completes within {:.1} days ({:.1} weeks)", median, median / 7.0);
+    println!("   • 80% Probability:   Completes within {:.1} days ({:.1} weeks)", p80, p80 / 7.0);
+    println!("   • 95% Probability:   Completes within {:.1} days ({:.1} weeks)", p95, p95 / 7.0);
     println!();
 
-    println!("📋 Buffer Analizi (McKinsey %35 Sapma Dahil):");
+    println!("📋 Buffer Analysis (Including McKinsey 35% Variance):");
     let buffer_80 = p80 - mean;
     let buffer_95 = p95 - mean;
     let mckinsey_buffer = mean * 0.35; // Referans için McKinsey'nin %35'i
-    println!("   • %80 Güven için:    +{:.1} gün buffer ({:.1}% ekleme)", buffer_80, (buffer_80 / mean) * 100.0);
-    println!("   • %95 Güven için:    +{:.1} gün buffer ({:.1}% ekleme)", buffer_95, (buffer_95 / mean) * 100.0);
-    println!("   • McKinsey Referans: +{:.1} gün buffer (%35 ekleme)", mckinsey_buffer);
+    println!("   • For 80% Confidence: +{:.1} days buffer ({:.1}% addition)", buffer_80, (buffer_80 / mean) * 100.0);
+    println!("   • For 95% Confidence: +{:.1} days buffer ({:.1}% addition)", buffer_95, (buffer_95 / mean) * 100.0);
+    println!("   • McKinsey Reference: +{:.1} days buffer (35% addition)", mckinsey_buffer);
     println!();
 
-    println!("🛤️  Kritik Yol Analizi:");
-    println!("   • Kritik Görevler: {}", critical_path.join(" → "));
-    println!("   • Kritik Yol Süresi: {:.1} gün", schedule.early_finish.values().fold(0.0f64, |acc, &x| acc.max(x)));
+    println!("🛤️  Critical Path Analysis:");
+    println!("   • Critical Tasks: {}", critical_path.join(" → "));
+    println!("   • Critical Path Duration: {:.1} days", schedule.early_finish.values().fold(0.0f64, |acc, &x| acc.max(x)));
     println!();
 
-    println!("💡 ÖNERİLER:");
-    println!("   • Müşteriye %80 güvenle {} hafta ({:.0} gün) söyleyebilirsiniz", (p80 / 7.0).ceil(), p80.ceil());
-    println!("   • İç planlama için {} hafta ({:.0} gün) buffer ekleyin", ((p95 - p80) / 7.0).ceil(), (p95 - p80).ceil());
-    println!("   • Kritik yoldaki görevlere özel dikkat gösterin");
-    println!("   • McKinsey verileri ve görünmeyen görevler otomatik hesaplandı");
+    println!("💡 RECOMMENDATIONS:");
+    println!("   • Tell client with 80% confidence: {} weeks ({:.0} days)", (p80 / 7.0).ceil(), p80.ceil());
+    println!("   • Add {} weeks ({:.0} days) buffer for internal planning", ((p95 - p80) / 7.0).ceil(), (p95 - p80).ceil());
+    println!("   • Pay special attention to critical path tasks");
+    println!("   • McKinsey data and hidden tasks automatically calculated");
 
     // Risk analizi
     println!();
-    println!("⚠️  Risk Analizi:");
+    println!("⚠️  Risk Analysis:");
     let mut risk_tasks: Vec<_> = schedule.tasks.iter().collect();
     risk_tasks.sort_by(|a, b| b.1.pert_stddev.partial_cmp(&a.1.pert_stddev).unwrap());
 
-    println!("   En Riskli Görevler (Yüksek Belirsizlik):");
+    println!("   Highest Risk Tasks (High Uncertainty):");
     for (i, (task_id, task)) in risk_tasks.iter().take(3).enumerate() {
-        let risk_level = if task.pert_stddev > 2.0 { "🔴 Yüksek" }
-        else if task.pert_stddev > 1.0 { "🟡 Orta" }
-        else { "🟢 Düşük" };
-        println!("   {}. {} - {} ({} Risk, ±{:.1} gün)",
+        let risk_level = if task.pert_stddev > 2.0 { "🔴 High" }
+        else if task.pert_stddev > 1.0 { "🟡 Medium" }
+        else { "🟢 Low" };
+        println!("   {}. {} - {} ({} Risk, ±{:.1} days)",
                  i + 1, task_id, task.name, risk_level, task.pert_stddev);
     }
 
@@ -321,7 +320,7 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("🎯 MONTE CARLO PROJE PLANLAMA ARACI");
+    println!("🎯 MONTE CARLO PROJECT PLANNING TOOL");
     println!("════════════════════════════════════");
     println!();
 
@@ -332,16 +331,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     match run_monte_carlo_simulation(filename, iterations) {
         Ok(_) => {
             println!();
-            println!("✨ Simülasyon başarıyla tamamlandı!");
-            println!("📝 Bu sonuçları yöneticilerinizle paylaşarak data-driven karar verebilirsiniz.");
+            println!("✨ Simulation completed successfully!");
+            println!("📝 Share these results with your managers to make data-driven decisions.");
         },
         Err(e) => {
-            eprintln!("❌ Hata: {}", e);
+            eprintln!("❌ Error: {}", e);
             eprintln!();
-            eprintln!("🔧 Sorun Giderme:");
-            eprintln!("   • project_data.csv dosyasının mevcut dizinde olduğundan emin olun");
-            eprintln!("   • CSV formatının doğru olduğunu kontrol edin");
-            eprintln!("   • Dosya izinlerini kontrol edin");
+            eprintln!("🔧 Troubleshooting:");
+            eprintln!("   • Make sure project_data.csv file exists in the current directory");
+            eprintln!("   • Check that the CSV format is correct");
+            eprintln!("   • Check file permissions");
         }
     }
 
