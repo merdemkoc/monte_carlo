@@ -1,0 +1,12 @@
+task_id,task_name,predecessor,optimistic,most_likely,pessimistic,PERT_Expected,PERT_Variance,PERT_StdDev,Early_Start,Early_Finish,Late_Start,Late_Finish,Total_Float,Is_Critical
+T1,Home,,4,8,12,8.0,1.8,1.3,,,,,,
+T2,Card States,T1,4,8,12,8.0,1.8,1.3,,,,,,
+T3,eSIM Installation States,T2,2,4,6,4.0,0.4,0.7,,,,,,
+T4,Suggestion + Get most from Roamless,,2,4,5,3.8,0.3,0.5,,,,,,
+T5,Discovery (Country Detail),T1,5,10,15,10.0,2.8,1.7,,,,,,
+T6,Checkout,T5,5,10,20,10.8,6.3,2.5,,,,,,
+T7,Data,T6,3,5,8,5.2,0.7,0.8,,,,,,
+T8,Profile,T7,3,5,8,5.2,0.7,0.8,,,,,,
+T9,Number Concepts Design,,5,10,13,9.7,1.8,1.3,,,,,,
+T10,Research Planning,T9,5,10,15,10.0,2.8,1.7,,,,,,
+T11,Research - Number Interest,T10,8,15,20,14.7,4.0,2.0,,,,,,
