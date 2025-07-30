@@ -235,15 +235,6 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     let avg_invisible_tasks = total_invisible_tasks / iterations as f64;
     let avg_system_risk_factor = total_system_risk_factor / iterations as f64;
 
-    println!("🔍 MCKINSEY FACTOR ANALYSIS:");
-    println!("   • Average Base Project Duration:   {:.1} days ({:.1} weeks)", avg_base_duration, avg_base_duration / 7.0);
-    println!("   • Average Hidden Tasks:            +{:.1} days ({:.1}% addition)", avg_invisible_tasks, (avg_invisible_tasks / avg_base_duration) * 100.0);
-    println!("   • Average System Risk Multiplier:  x{:.2} ({:.1}% increase)", avg_system_risk_factor, (avg_system_risk_factor - 1.0) * 100.0);
-    println!("   • Total McKinsey Effect:           {:.1} days → {:.1} days ({:.1}% increase)",
-             avg_base_duration,
-             avg_base_duration * avg_system_risk_factor + avg_invisible_tasks,
-             ((avg_base_duration * avg_system_risk_factor + avg_invisible_tasks) / avg_base_duration - 1.0) * 100.0);
-    println!();
 
     // Sonuçları sırala
     durations.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -267,18 +258,19 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     // Sonuçları yazdır
     println!("📈 MONTE CARLO SIMULATION RESULTS");
     println!("═══════════════════════════════════════");
+    println!("   📝 Note: All week calculations are in WORK WEEKS (5 business days)");
     println!();
     println!("🎯 Basic Statistics:");
-    println!("   • Average Duration:  {:.1} days ({:.1} weeks)", mean, mean / 7.0);
-    println!("   • Median Duration:   {:.1} days ({:.1} weeks)", median, median / 7.0);
-    println!("   • Minimum Duration:  {:.1} days ({:.1} weeks)", min, min / 7.0);
-    println!("   • Maximum Duration:  {:.1} days ({:.1} weeks)", max, max / 7.0);
+    println!("   • Average Duration:  {:.1} days ({:.1} work weeks)", mean, mean / 5.0);
+    println!("   • Median Duration:   {:.1} days ({:.1} work weeks)", median, median / 5.0);
+    println!("   • Minimum Duration:  {:.1} days ({:.1} work weeks)", min, min / 5.0);
+    println!("   • Maximum Duration:  {:.1} days ({:.1} work weeks)", max, max / 5.0);
     println!();
 
     println!("🎲 Probability Distribution:");
-    println!("   • 50% Probability:   Completes within {:.1} days ({:.1} weeks)", median, median / 7.0);
-    println!("   • 80% Probability:   Completes within {:.1} days ({:.1} weeks)", p80, p80 / 7.0);
-    println!("   • 95% Probability:   Completes within {:.1} days ({:.1} weeks)", p95, p95 / 7.0);
+    println!("   • 50% Probability:   Completes within {:.1} days ({:.1} work weeks)", median, median / 5.0);
+    println!("   • 80% Probability:   Completes within {:.1} days ({:.1} work weeks)", p80, p80 / 5.0);
+    println!("   • 95% Probability:   Completes within {:.1} days ({:.1} work weeks)", p95, p95 / 5.0);
     println!();
 
     println!("📋 Buffer Analysis (Including McKinsey 35% Variance):");
@@ -288,6 +280,8 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     println!("   • For 80% Confidence: +{:.1} days buffer ({:.1}% addition)", buffer_80, (buffer_80 / mean) * 100.0);
     println!("   • For 95% Confidence: +{:.1} days buffer ({:.1}% addition)", buffer_95, (buffer_95 / mean) * 100.0);
     println!("   • McKinsey Reference: +{:.1} days buffer (35% addition)", mckinsey_buffer);
+    println!("   • Average Hidden Tasks:            +{:.1} days ({:.1}% addition)", avg_invisible_tasks, (avg_invisible_tasks / avg_base_duration) * 100.0);
+    println!("   • Average System Risk Multiplier:  x{:.2} ({:.1}% increase)", avg_system_risk_factor, (avg_system_risk_factor - 1.0) * 100.0);
     println!();
 
     println!("🛤️  Critical Path Analysis:");
@@ -295,10 +289,14 @@ fn run_monte_carlo_simulation(filename: &str, iterations: usize) -> Result<(), B
     println!("   • Critical Path Duration: {:.1} days", schedule.early_finish.values().fold(0.0f64, |acc, &x| acc.max(x)));
     println!();
     println!("💡 RECOMMENDATIONS:");
-    println!("   • Tell client with 80% confidence: {} weeks ({:.0} days)", (p80 / 7.0).ceil(), p80.ceil());
-    println!("   • Add {} weeks ({:.0} days) buffer for internal planning", ((p95 - p80) / 7.0).ceil(), (p95 - p80).ceil());
+    // Calculate comprehensive recommendation: (80% Probability + Hidden Tasks) * System Risk
+    let recommended_duration = (p80 + avg_invisible_tasks) * avg_system_risk_factor;
+    
+    println!("   • Recommended client estimate: {} work weeks ({:.0} days)", (recommended_duration / 5.0).ceil(), recommended_duration.ceil());
+    println!("     - Formula: (80% confidence {:.0} days + Hidden tasks {:.0} days) × System risk {:.2} = {:.0} days", p80, avg_invisible_tasks, avg_system_risk_factor, recommended_duration);  
+    println!("   • Add {} work weeks ({:.0} days) buffer for internal planning", ((p95 - recommended_duration) / 5.0).ceil().max(1.0), (p95 - recommended_duration).ceil().max(5.0));
     println!("   • Pay special attention to critical path tasks");
-    println!("   • McKinsey data and hidden tasks automatically calculated");
+    println!("   • McKinsey factors already integrated in recommendation");
 
     // Risk analizi
     println!();
