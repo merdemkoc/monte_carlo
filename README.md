@@ -115,22 +115,35 @@ The tool provides several key metrics:
    • Focus on critical path tasks
 ```
 
-## Technical Details
+## Architecture
 
-### Dependencies
+The tool is built with a modular architecture for maintainability and extensibility:
 
-- `csv`: CSV file parsing
+### Core Modules
+
+- **`models.rs`**: Data structures for tasks, schedules, and simulation results
+- **`data_loader.rs`**: CSV parsing and project data loading functionality
+- **`scheduler.rs`**: Critical path calculation and project scheduling logic
+- **`simulation.rs`**: Monte Carlo simulation engine with McKinsey factor integration
+- **`reporter.rs`**: Comprehensive output formatting and analysis reporting
+- **`main.rs`**: Application entry point and workflow orchestration
+
+### Technical Details
+
+#### Dependencies
+
+- `csv`: CSV file parsing and data input handling
 - `rand` & `rand_distr`: Random number generation and statistical distributions  
-- `serde`: Data serialization/deserialization
+- `serde`: Data serialization/deserialization for structured data handling
 
-### Methodology
+#### Methodology
 
 1. **Task Duration Sampling**: Each iteration samples task durations from normal distributions based on PERT parameters
 2. **Schedule Calculation**: Uses topological sorting to calculate early start/finish times respecting dependencies
 3. **McKinsey Adjustments**: Applies research-based factors for hidden tasks and systemic risks
 4. **Statistical Analysis**: Aggregates results across iterations to provide confidence intervals
 
-### Algorithms
+#### Algorithms
 
 - **Critical Path Method (CPM)**: Forward pass calculation for project scheduling
 - **Topological Sort**: Ensures tasks are processed in dependency order
@@ -145,7 +158,7 @@ let filename = "project_data.csv";  // CSV file path
 let iterations = 10000;             // Number of simulation runs
 ```
 
-For different McKinsey factors, adjust the ranges in the simulation loop:
+For different McKinsey factors, adjust the ranges in `src/simulation.rs`:
 ```rust
 let invisible_tasks_factor = rng.gen_range(0.10..=0.15);  // 10-15% hidden tasks
 let system_risk_factor = rng.gen_range(1.0..=1.35);       // 1.0-1.35x system risk
